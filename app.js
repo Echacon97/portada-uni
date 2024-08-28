@@ -90,12 +90,12 @@ class PDFGenerator {
     this.writeCenteredText(faculty, line);
     line += 20;
     this.writeCenteredText(career, line);
-    line += 20;
+    line += 40;
 
     // Inserta el logo de la universidad
     const logoBase64 = await this.loadUniLogo();
-    this.doc.addImage(logoBase64, "PNG", (this.pageWidth - 163) / 2, line, 163, 104);
-    line += 140;
+    this.doc.addImage(logoBase64, "PNG", (this.pageWidth - 120) / 2, line, 120, 77);
+    line = 260;
 
     // Configuración de la clase y tarea
     this.doc.setFontSize(18);
