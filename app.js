@@ -14,7 +14,7 @@ class PDFGenerator {
     // Inicializa un nuevo documento PDF con formato de carta (letter) y unidades en píxeles (px)
     this.doc = new jsPDF({ unit: "px", format: "letter" });
     this.pageWidth = this.doc.internal.pageSize.width; // Ancho de la página
-    this.UNI_LOGO_SRC = "/uni_logo.png"; // Ruta de la imagen del logo de la universidad
+    this.UNI_LOGO_SRC = "./uni_logo.png"; // Ruta de la imagen del logo de la universidad
   }
 
   /**
