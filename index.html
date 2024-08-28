@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.blue.min.css"
+    />
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Generador de portada de la UNI</h1>
+        <img src="/uni_logo.png" alt="Logo de la UNI" />
+        <a
+          class="github-button"
+          href="https://github.com/deybismelendez"
+          data-color-scheme="no-preference: light; light: light; dark: dark;"
+          data-size="large"
+          aria-label="Follow @deybismelendez on GitHub"
+          >Follow @deybismelendez</a
+        >
+        <a
+          class="github-button"
+          href="https://github.com/deybismelendez/portada-uni"
+          data-color-scheme="no-preference: light; light: light; dark: dark;"
+          data-icon="octicon-star"
+          data-size="large"
+          aria-label="Star deybismelendez/portada-uni on GitHub"
+          >Star</a
+        >
+        <a
+          class="github-button"
+          href="https://github.com/deybismelendez/portada-uni/fork"
+          data-color-scheme="no-preference: light; light: light; dark: dark;"
+          data-icon="octicon-repo-forked"
+          data-size="large"
+          aria-label="Fork deybismelendez/portada-uni on GitHub"
+          >Fork</a
+        >
+      </header>
+      <section>
+        <div class="grid">
+          <div>
+            <label for="fecha">Fecha</label>
+            <input type="date" name="fecha" id="fecha" />
+          </div>
+          <div>
+            <label for="lugar">Lugar</label>
+            <input type="text" name="lugar" id="lugar" placeholder="Lugar" value="Managua, Nicaragua" />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label for="facultad">Nombre de la facultad</label>
+            <input type="text" name="facultad" id="facultad" placeholder="Facultad" value="FACULTAD DE AREA DE CONOCIMIENTO DACTIC" />
+          </div>
+          <div>
+            <label for="clase">Nombre de la carrera</label>
+            <input type="text" name="carrera" id="carrera" placeholder="Carrera" value="INGENIERÍA EN COMPUTACIÓN" />
+          </div>
+        </div>
+        <div class="grid">
+          <div>
+            <label for="clase">Nombre de la clase</label>
+            <input type="text" name="clase" id="clase" placeholder="Clase" />
+          </div>
+          <div>
+            <label for="tarea">Nombre de la tarea</label>
+            <input type="text" name="tarea" id="tarea" placeholder="Tarea" />
+          </div>
+          <div>
+            <label for="docente">Nombre del docente</label>
+            <input
+              type="text"
+              name="docente"
+              id="docente"
+              placeholder="Docente"
+            />
+          </div>
+        </div>
+        <div>
+          <label for="estudiantes">Elaborado por</label>
+          <textarea
+            name="estudiantes"
+            id="estudiantes"
+            placeholder="Elaborado por"
+          >
+Deybis Antonio Melendez Vargas</textarea
+          >
+        </div>
+
+        <button onclick="createDoc();">Generar PDF</button>
+      </section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
