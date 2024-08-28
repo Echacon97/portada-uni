@@ -5,8 +5,8 @@ document.querySelector("#fecha").valueAsDate = new Date();
 
 /**
  * Clase PDFGenerator
- * 
- * Esta clase encapsula toda la lógica para generar un PDF con jsPDF. 
+ *
+ * Esta clase encapsula toda la lógica para generar un PDF con jsPDF.
  * Incluye métodos para manejar imágenes, formatear fechas y escribir texto centrado en el documento.
  */
 class PDFGenerator {
@@ -49,8 +49,18 @@ class PDFGenerator {
    */
   getNaturalDate(dateStr) {
     const months = [
-      "enero", "febrero", "marzo", "abril", "mayo", "junio",
-      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre",
     ];
 
     const [year, month, day] = dateStr.split("-");
@@ -94,7 +104,14 @@ class PDFGenerator {
 
     // Inserta el logo de la universidad
     const logoBase64 = await this.loadUniLogo();
-    this.doc.addImage(logoBase64, "PNG", (this.pageWidth - 120) / 2, line, 120, 77);
+    this.doc.addImage(
+      logoBase64,
+      "PNG",
+      (this.pageWidth - 120) / 2,
+      line,
+      120,
+      77
+    );
     line = 260;
 
     // Configuración de la clase y tarea
@@ -136,4 +153,6 @@ class PDFGenerator {
 
 // Inicializa el generador de PDF y agrega un evento para generar el PDF al hacer clic en el botón
 const pdfGen = new PDFGenerator();
-document.querySelector("#generarPDF").addEventListener("click", () => pdfGen.generate());
+document
+  .querySelector("#generarPDF")
+  .addEventListener("click", () => pdfGen.generate());
