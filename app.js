@@ -1,38 +1,22 @@
 const { jsPDF } = window.jspdf;
 
-// Establece la fecha actual en el campo de fecha del formulario
-document.querySelector("#fecha").valueAsDate = new Date();
-
-/**
- * Clase PDFGenerator
- *
- * Esta clase encapsula toda la lógica para generar un PDF con jsPDF.
- * Incluye métodos para manejar imágenes, formatear fechas y escribir texto centrado en el documento.
- */
 class PDFGenerator {
   constructor() {
-    // Inicializa un nuevo documento PDF con formato de carta (letter) y unidades en píxeles (px)
     this.doc = new jsPDF({ unit: "px", format: "letter" });
-    this.pageWidth = this.doc.internal.pageSize.width; // Ancho de la página
-    this.UNI_LOGO_SRC = "uni_logo.png"; // Ruta de la imagen del logo de la universidad
+    this.pageWidth = this.doc.internal.pageSize.width;
+    this.pageHeight = this.doc.internal.pageSize.height;
+    this.margins = { top: 60, left: 60, right: 60, bottom: 60 };
+    this.UNI_LOGO_SRC = "uni_logo.png";
+    this.lineSpacing = 20;
   }
 
-  /**
-   * Carga el logo de la universidad y lo convierte en un string Base64.
-   * @returns {Promise<string>} - Una promesa que se resuelve con la cadena Base64 de la imagen.
-   */
   async loadUniLogo() {
     const img = new Image();
     img.src = this.UNI_LOGO_SRC;
-    await img.decode(); // Espera a que la imagen se cargue completamente
+    await img.decode();
     return this.imageToBase64(img);
   }
 
-  /**
-   * Convierte una imagen en un string Base64 usando un elemento canvas.
-   * @param {HTMLImageElement} img - La imagen a convertir.
-   * @returns {string} - La imagen convertida en Base64.
-   */
   imageToBase64(img) {
     const canvas = document.createElement("CANVAS");
     const ctx = canvas.getContext("2d");
@@ -42,117 +26,98 @@ class PDFGenerator {
     return canvas.toDataURL("image/png");
   }
 
-  /**
-   * Convierte una fecha en formato YYYY-MM-DD a una fecha en lenguaje natural.
-   * @param {string} dateStr - La fecha en formato YYYY-MM-DD.
-   * @returns {string} - La fecha en lenguaje natural, por ejemplo, "17 de agosto de 2024".
-   */
   getNaturalDate(dateStr) {
     const months = [
-      "enero",
-      "febrero",
-      "marzo",
-      "abril",
-      "mayo",
-      "junio",
-      "julio",
-      "agosto",
-      "septiembre",
-      "octubre",
-      "noviembre",
-      "diciembre",
+      "enero", "febrero", "marzo", "abril", "mayo", "junio",
+      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
     ];
-
     const [year, month, day] = dateStr.split("-");
     return `${day} de ${months[parseInt(month, 10) - 1]} de ${year}`;
   }
 
-  /**
-   * Escribe un texto centrado horizontalmente en el PDF.
-   * @param {string} text - El texto a escribir.
-   * @param {number} y - La posición vertical (eje y) donde se escribirá el texto.
-   */
-  writeCenteredText(text, y) {
-    const textWidth = this.doc.getTextWidth(text);
-    const x = (this.pageWidth - textWidth) / 2; // Calcula la posición X para centrar el texto
-    this.doc.text(text, x, y);
+  writeCenteredText(text, y, maxWidth = this.pageWidth - this.margins.left - this.margins.right) {
+    const lines = this.doc.splitTextToSize(text, maxWidth);
+    const lineHeight = this.doc.getLineHeight() / this.doc.internal.scaleFactor;
+    
+    lines.forEach((line, i) => {
+      const textWidth = this.doc.getTextWidth(line);
+      const x = (this.pageWidth - textWidth) / 2;
+      this.doc.text(line, x, y + (i * lineHeight));
+    });
+    
+    return lines.length * lineHeight;
   }
 
-  /**
-   * Genera el documento PDF con toda la información proporcionada por el usuario.
-   */
-  async generate() {
-    let line = 40; // Posición inicial en Y
+  async generateSociologyCover() {
     const date = this.getNaturalDate(document.querySelector("#fecha").value);
     const location = document.querySelector("#lugar").value;
-    const faculty = document.querySelector("#facultad").value;
-    const career = document.querySelector("#carrera").value;
-    const classroom = document.querySelector("#clase").value;
-    const homework = document.querySelector("#tarea").value;
+    const title = document.querySelector("#titulo").value;
+    const subtitle = document.querySelector("#subtitulo").value;
     const teacher = document.querySelector("#docente").value;
     const students = document.querySelector("#estudiantes").value.split("\n");
+    
+    let currentY = this.margins.top;
 
-    // Configuración del texto y escritura de encabezados
-    this.doc.setFont("times", "bold");
-    this.doc.setFontSize(20);
-    this.writeCenteredText("UNIVERSIDAD NACIONAL DE INGENIERIA", line);
-    line += 20;
-    this.writeCenteredText(faculty, line);
-    line += 20;
-    this.writeCenteredText(career, line);
-    line += 40;
-
-    // Inserta el logo de la universidad
+    // Logo y encabezado institucional
     const logoBase64 = await this.loadUniLogo();
     this.doc.addImage(
       logoBase64,
       "PNG",
-      (this.pageWidth - 120) / 2,
-      line,
-      120,
-      77
+      (this.pageWidth - 100) / 2,
+      currentY,
+      100,
+      65
     );
-    line = 260;
+    currentY += 85;
 
-    // Configuración de la clase y tarea
-    this.doc.setFontSize(18);
-    this.writeCenteredText(classroom, line);
-    this.doc.setFont("times", "italic");
-    line += 20;
-    this.writeCenteredText(homework, line);
-    line += 40;
+    // Título principal
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setFontSize(24);
+    currentY += this.writeCenteredText(title.toUpperCase(), currentY);
+    currentY += this.lineSpacing;
 
-    // Escribe los estudiantes y docente
-    this.doc.setFont("times", "bold");
-    this.writeCenteredText("Elaborado por:", line);
-    line += 20;
-    this.doc.setFont("times", "normal");
-    students.forEach((student) => {
-      this.writeCenteredText(student, line);
-      line += 16;
+    // Subtítulo
+    if (subtitle) {
+      this.doc.setFont("helvetica", "normal");
+      this.doc.setFontSize(18);
+      currentY += this.writeCenteredText(subtitle, currentY);
+      currentY += this.lineSpacing * 2;
+    }
+
+    // Sección de autores
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setFontSize(16);
+    currentY += this.writeCenteredText("Elaborado por:", currentY);
+    currentY += this.lineSpacing / 2;
+
+    this.doc.setFont("helvetica", "normal");
+    this.doc.setFontSize(14);
+    students.forEach(student => {
+      currentY += this.writeCenteredText(student.trim(), currentY);
     });
-    line += 20;
+    currentY += this.lineSpacing;
 
-    this.doc.setFont("times", "bold");
-    this.writeCenteredText("Docente:", line);
-    line += 20;
-    this.doc.setFont("times", "normal");
-    this.writeCenteredText(teacher, line);
+    // Sección de docente
+    this.doc.setFont("helvetica", "bold");
+    currentY += this.writeCenteredText("Docente:", currentY);
+    currentY += this.lineSpacing / 2;
 
-    // Escribe la ubicación y la fecha
-    line = 540;
-    this.doc.setFont("times", "italic");
-    this.writeCenteredText(location, line);
-    line += 16;
-    this.writeCenteredText(date, line);
+    this.doc.setFont("helvetica", "normal");
+    currentY += this.writeCenteredText(teacher, currentY);
+    currentY += this.lineSpacing * 2;
 
-    // Guarda el documento PDF
-    this.doc.save("documento.pdf");
+    // Pie de página
+    this.doc.setFont("helvetica", "italic");
+    this.doc.setFontSize(12);
+    currentY += this.writeCenteredText(location, currentY);
+    currentY += this.lineSpacing / 2;
+    this.writeCenteredText(date, currentY);
+
+    // Guardar el documento
+    this.doc.save(`Portada - ${title}.pdf`);
   }
 }
 
-// Inicializa el generador de PDF y agrega un evento para generar el PDF al hacer clic en el botón
+// Uso:
 const pdfGen = new PDFGenerator();
-document
-  .querySelector("#generarPDF")
-  .addEventListener("click", () => pdfGen.generate());
+document.querySelector("#generarPDF").addEventListener("click", () => pdfGen.generateSociologyCover());
