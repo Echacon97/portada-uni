@@ -88,7 +88,7 @@ class PDFGenerator {
     const faculty = document.querySelector("#facultad").value;
     const career = document.querySelector("#carrera").value;
     const classroom = document.querySelector("#clase").value;
-    const homework = document.querySelector("#tarea").value;
+    const homework = document.querySelector("#tarea").value.split("\n");
     const teacher = document.querySelector("#docente").value;
     const students = document.querySelector("#estudiantes").value.split("\n");
 
@@ -119,7 +119,10 @@ class PDFGenerator {
     this.writeCenteredText(classroom, line);
     this.doc.setFont("times", "italic");
     line += 20;
-    this.writeCenteredText(homework, line);
+    homework.forEach((homeworkLine) => {
+      this.writeCenteredText(homeworkLine, line);
+      line += 16;
+    });
     line += 40;
 
     // Escribe los estudiantes y docente
@@ -152,7 +155,7 @@ class PDFGenerator {
 }
 
 // Inicializa el generador de PDF y agrega un evento para generar el PDF al hacer clic en el botón
-const pdfGen = new PDFGenerator();
-document
-  .querySelector("#generarPDF")
-  .addEventListener("click", () => pdfGen.generate());
+document.querySelector("#generarPDF").addEventListener("click", () => {
+  const pdfGen = new PDFGenerator();
+  pdfGen.generate();
+});
