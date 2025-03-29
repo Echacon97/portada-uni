@@ -1,123 +1,125 @@
 const { jsPDF } = window.jspdf;
 
 class PDFGenerator {
-  constructor() {
-    this.doc = new jsPDF({ unit: "px", format: "letter" });
-    this.pageWidth = this.doc.internal.pageSize.width;
-    this.pageHeight = this.doc.internal.pageSize.height;
-    this.margins = { top: 60, left: 60, right: 60, bottom: 60 };
-    this.UNI_LOGO_SRC = "uni_logo.png";
-    this.lineSpacing = 20;
-  }
-
-  async loadUniLogo() {
-    const img = new Image();
-    img.src = this.UNI_LOGO_SRC;
-    await img.decode();
-    return this.imageToBase64(img);
-  }
-
-  imageToBase64(img) {
-    const canvas = document.createElement("CANVAS");
-    const ctx = canvas.getContext("2d");
-    canvas.height = img.naturalHeight;
-    canvas.width = img.naturalWidth;
-    ctx.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/png");
-  }
-
-  getNaturalDate(dateStr) {
-    const months = [
-      "enero", "febrero", "marzo", "abril", "mayo", "junio",
-      "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ];
-    const [year, month, day] = dateStr.split("-");
-    return `${day} de ${months[parseInt(month, 10) - 1]} de ${year}`;
-  }
-
-  writeCenteredText(text, y, maxWidth = this.pageWidth - this.margins.left - this.margins.right) {
-    const lines = this.doc.splitTextToSize(text, maxWidth);
-    const lineHeight = this.doc.getLineHeight() / this.doc.internal.scaleFactor;
-    
-    lines.forEach((line, i) => {
-      const textWidth = this.doc.getTextWidth(line);
-      const x = (this.pageWidth - textWidth) / 2;
-      this.doc.text(line, x, y + (i * lineHeight));
-    });
-    
-    return lines.length * lineHeight;
-  }
-
-  async generateSociologyCover() {
-    const date = this.getNaturalDate(document.querySelector("#fecha").value);
-    const location = document.querySelector("#lugar").value;
-    const title = document.querySelector("#titulo").value;
-    const subtitle = document.querySelector("#subtitulo").value;
-    const teacher = document.querySelector("#docente").value;
-    const students = document.querySelector("#estudiantes").value.split("\n");
-    
-    let currentY = this.margins.top;
-
-    // Logo y encabezado institucional
-    const logoBase64 = await this.loadUniLogo();
-    this.doc.addImage(
-      logoBase64,
-      "PNG",
-      (this.pageWidth - 100) / 2,
-      currentY,
-      100,
-      65
-    );
-    currentY += 85;
-
-    // Título principal
-    this.doc.setFont("helvetica", "bold");
-    this.doc.setFontSize(24);
-    currentY += this.writeCenteredText(title.toUpperCase(), currentY);
-    currentY += this.lineSpacing;
-
-    // Subtítulo
-    if (subtitle) {
-      this.doc.setFont("helvetica", "normal");
-      this.doc.setFontSize(18);
-      currentY += this.writeCenteredText(subtitle, currentY);
-      currentY += this.lineSpacing * 2;
+    constructor() {
+        this.doc = new jsPDF({ 
+            unit: "px", 
+            format: "letter",
+            compress: true  // Compresión para optimizar el PDF
+        });
+        this.pageWidth = this.doc.internal.pageSize.width;
+        this.pageHeight = this.doc.internal.pageSize.height;
+        this.margins = {
+            left: 40,
+            right: 40,
+            top: 40,
+            bottom: 40
+        };
+        this.lineHeight = 1.2; // Espaciado entre líneas
     }
 
-    // Sección de autores
-    this.doc.setFont("helvetica", "bold");
-    this.doc.setFontSize(16);
-    currentY += this.writeCenteredText("Elaborado por:", currentY);
-    currentY += this.lineSpacing / 2;
+    /**
+     * Escribe texto con autoajuste de tamaño de fuente
+     * @param {string} text - Texto a escribir
+     * @param {number} y - Posición vertical inicial
+     * @param {number} maxWidth - Ancho máximo disponible
+     * @param {number} initialSize - Tamaño inicial de fuente
+     * @param {string} [style='normal'] - Estilo de fuente (normal/bold/italic)
+     * @returns {number} Nueva posición Y después del texto
+     */
+    writeAutoFit(text, y, maxWidth, initialSize = 20, style = 'normal') {
+        if (!text || text.trim() === '') return y;
+        
+        const font = 'helvetica';
+        let fontSize = initialSize;
+        let textWidth;
+        let lines;
+        
+        // Ajuste progresivo del tamaño de fuente
+        do {
+            this.doc.setFont(font, style);
+            this.doc.setFontSize(fontSize);
+            lines = this.doc.splitTextToSize(text, maxWidth);
+            textWidth = this.doc.getTextWidth(lines[0]);
+            
+            if (textWidth > maxWidth && fontSize > 8) {
+                fontSize -= 1;
+            }
+        } while (textWidth > maxWidth && fontSize > 8);
+        
+        // Escribir cada línea
+        lines.forEach((line, index) => {
+            const x = (this.pageWidth - this.doc.getTextWidth(line)) / 2;
+            this.doc.text(line, x, y + (index * fontSize * this.lineHeight));
+        });
+        
+        return y + (lines.length * fontSize * this.lineHeight);
+    }
 
-    this.doc.setFont("helvetica", "normal");
-    this.doc.setFontSize(14);
-    students.forEach(student => {
-      currentY += this.writeCenteredText(student.trim(), currentY);
-    });
-    currentY += this.lineSpacing;
-
-    // Sección de docente
-    this.doc.setFont("helvetica", "bold");
-    currentY += this.writeCenteredText("Docente:", currentY);
-    currentY += this.lineSpacing / 2;
-
-    this.doc.setFont("helvetica", "normal");
-    currentY += this.writeCenteredText(teacher, currentY);
-    currentY += this.lineSpacing * 2;
-
-    // Pie de página
-    this.doc.setFont("helvetica", "italic");
-    this.doc.setFontSize(12);
-    currentY += this.writeCenteredText(location, currentY);
-    currentY += this.lineSpacing / 2;
-    this.writeCenteredText(date, currentY);
-
-    // Guardar el documento
-    this.doc.save(`Portada - ${title}.pdf`);
-  }
+    /**
+     * Genera el PDF con los datos del formulario
+     */
+    async generate() {
+        try {
+            // Obtener datos del formulario
+            const title = document.getElementById("titulo").value || "Sin título";
+            const students = document.getElementById("estudiantes").value.split("\n").filter(s => s.trim());
+            const teacher = document.getElementById("docente").value || "Docente no especificado";
+            
+            let y = this.margins.top;
+            
+            // 1. Título (con autoajuste)
+            this.doc.setFont("helvetica", "bold");
+            y = this.writeAutoFit(title, y, this.pageWidth - this.margins.left - this.margins.right, 24, 'bold') + 20;
+            
+            // 2. Lista de estudiantes
+            this.doc.setFont("helvetica", "normal");
+            this.doc.setFontSize(14);
+            this.doc.text("Elaborado por:", this.margins.left, y);
+            y += 20;
+            
+            students.forEach(student => {
+                if (student.trim()) {
+                    this.doc.text(student.trim(), this.margins.left + 10, y);
+                    y += 15;
+                }
+            });
+            
+            // 3. Información del docente
+            y += 10;
+            this.doc.setFont("helvetica", "bold");
+            this.doc.text("Docente:", this.margins.left, y);
+            this.doc.setFont("helvetica", "normal");
+            this.doc.text(teacher, this.margins.left + 40, y);
+            
+            // 4. Pie de página (fecha)
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            this.doc.setFontSize(12);
+            this.doc.text(`Generado el ${dateStr}`, this.margins.left, this.pageHeight - 20);
+            
+            // Guardar el PDF
+            this.doc.save(`Portada - ${title.substring(0, 20)}...pdf`);
+            
+        } catch (error) {
+            console.error("Error al generar el PDF:", error);
+            alert("Ocurrió un error al generar el PDF. Por favor verifica los datos.");
+        }
+    }
 }
 
-// Uso:
+// Inicialización
 const pdfGen = new PDFGenerator();
-document.querySelector("#generarPDF").addEventListener("click", () => pdfGen.generateSociologyCover());
+document.getElementById("generarPDF").addEventListener("click", () => {
+    // Validación básica
+    if (!document.getElementById("titulo").value) {
+        alert("Por favor ingresa al menos un título");
+        return;
+    }
+    pdfGen.generate();
+});
